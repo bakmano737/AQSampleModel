@@ -85,6 +85,9 @@ def diffH2(t, H2, C2H4, O3):
 def diffHCOOH(t, HCOOH, H2COO):
     return k10*H2COO*H2O
 
+def diffSys(t, Sys):
+    return t
+
 # Solving Procedure
 def solve():
     # Simulation parameters
