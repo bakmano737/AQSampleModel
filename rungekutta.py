@@ -32,11 +32,12 @@ import numpy as np
 # for the given time and estimate      #
 ########################################
 def rk4(tn,yn,dt,f,fargs):
-    k1 = dt*f(tn,       yn,       *fargs)
-    k2 = dt*f(tn+dt/2.0,yn+k1/2.0,*fargs)
-    k3 = dt*f(tn+dt/2.0,yn+k2/2.0,*fargs)
-    k4 = dt*f(tn+dt,    yn+k3,    *fargs)
-    yo = yn+(1.0/6.0)*(k1+2.0*k2+2.0*k3+k4)
+    k1 = f(tn,        yn,           *fargs)
+    k2 = f(tn+dt/2.0, yn+k1*dt/2.0, *fargs)
+    k3 = f(tn+dt/2.0, yn+k2*dt/2.0, *fargs)
+    k4 = f(tn+dt,     yn+k3*dt,     *fargs)
+    m  = (k1 + 2.0*k2 + 2.0*k3 + k4)/6.0
+    yo = yn + m*dt
     return yo
 
 ########################################
