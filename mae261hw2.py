@@ -85,46 +85,63 @@ def diffH2(t, H2, C2H4, O3):
 def diffHCOOH(t, HCOOH, H2COO):
     return k10*H2COO*H2O
 
-# Function Dicts
-pssaFunc = dict(O          = pssaO,
-                OH         = pssaOH,
-                HO2        = pssaHO2,
-                CH2OH      = pssaCH2OH,
-                HOCH2CH2O2 = pssaHOCH2CH2O2)
+# Some helpful dictionaries
+pssaFunc = dict(O     = pssaO,
+                OH    = pssaOH,
+                HO2   = pssaHO2,
+                CH2OH = pssaCH2OH,
+                HOCHb = pssaHOCH2CH2O2)
 
-diffFunc = dict(C2H4     = diffC2H4,
-                O3       = diffO3,
-                NO       = diffNO,
-                NO2      = diffNO2,
-                HNO3     = diffHNO3,
-                HCHO     = diffHCHO,
-                H2COO    = diffH2COO,
-                CO       = diffCO,
-                H2       = diffH2,
-                HCOOH    = diffHCOOH,
-                HOCH2CHO = diffHOCH2CHO)
+diffFunc = dict(C2H4  = diffC2H4,
+                O3    = diffO3,
+                NO    = diffNO,
+                NO2   = diffNO2,
+                HNO3  = diffHNO3,
+                HCHO  = diffHCHO,
+                H2COO = diffH2COO,
+                CO    = diffCO,
+                H2    = diffH2,
+                HCOOH = diffHCOOH,
+                HOCHa = diffHOCH2CHO) #HOCH2CHO
 
-diffArgs = dict(C2H4     = ['OH', 'O3'],
-                O3       = ['O', 'NO', 'C2H4'],
-                NO       = ['NO2', 'O3', 'HOCH2CH2O2', 'HO2'],
-                NO2      = ['NO', 'O3', 'HO2', 'OH', 'HOCH2CH2O2'],
-                HNO3     = ['OH', 'NO2'],
-                HCHO     = ['HOCH2CH2O2', 'NO', 'CH2OH', 'NO2', 'C2H4', 'O3'],
-                H2COO    = ['C2H4', 'O3'],
-                CO       = ['C2H4', 'O3'],
-                H2       = ['C2H4', 'O3'],
-                HCOOH    = ['H2COO'],
-                HOCH2CHO = ['HOCH2CH2O2', 'NO'])
+diffArgs = dict(C2H4  = ['OH', 'O3'],
+                O3    = ['O', 'NO', 'C2H4'],
+                NO    = ['NO2', 'O3', 'HOCHb', 'HO2'],
+                NO2   = ['NO', 'O3', 'HO2', 'OH', 'HOCHb'],
+                HNO3  = ['OH', 'NO2'],
+                HCHO  = ['HOCHb', 'NO', 'CH2OH', 'NO2', 'C2H4', 'O3'],
+                H2COO = ['C2H4', 'O3'],
+                CO    = ['C2H4', 'O3'],
+                H2    = ['C2H4', 'O3'],
+                HCOOH = ['H2COO'],
+                HOCHa = ['HOCHb', 'NO']) #HOCH2CHO
+
+ind = dict(C2H4  = 0,
+           O     = 1,
+           O3    = 2,
+           OH    = 3,
+           NO    = 4,
+           NO2   = 5,
+           HO2   = 6,
+           HNO3  = 7,
+           HCHO  = 8,
+           CH2OH = 9,
+           H2COO = 10,
+           CO    = 11,
+           H2    = 12,
+           HCOOH = 13,
+           HOCHa = 14, #HOCH2CHO
+           HOCHb = 15) #HOCH2CH2O2
 
 # Single Function for all diff eqs
 # t - current time of simulation
 # Sys - dictionary
-def diffSys(t, Sys):
-    newSys = {}
+def diffSys(t, Sys_0, Sys_1):
     #Evaluate all diff eqs
     for spec,func in diffFunc.items():
-        newSys[spec] = func(t,spec,[Sys[args] for args in diffArgs[spec]])
-    return newSys
+        fargs = [Sys_0[ind[args]] for args in diffArgs[spec]]
+        Sys_1[ind[spec]] = func(t,Sys_0[ind[spec]],*fargs)
+    return Sys_1
 
 # Solving Procedure
 def solve():
@@ -133,98 +150,72 @@ def solve():
     dt = 1.0e-4 #minutes
     tm = 12.0*60.0 #minutes
     st = int(tm/dt)
+    N = 16
     # All initialize to zero
-    Sys = dict(C2H4  = np.zeros(st),
-               O     = np.zeros(st),
-               O3    = np.zeros(st),
-               OH    = np.zeros(st),
-               NO    = np.zeros(st),
-               NO2   = np.zeros(st),
-               HO2   = np.zeros(st),
-               HNO3  = np.zeros(st),
-               HCHO  = np.zeros(st),
-               CH2OH = np.zeros(st),
-               H2COO = np.zeros(st),
-               CO    = np.zeros(st),
-               H2    = np.zeros(st),
-               HCOOH = np.zeros(st),
-               HOCH2CHO   = np.zeros(st),
-               HOCH2CH2O2 = np.zeros(st))
+    Sys = np.zeros((N,st))
     # Initialize (ppm)
-    Sys['C2H4'][0] = 3.0
-    Sys['NO'][0]   = 0.375
-    Sys['NO2'][0]  = 0.125
+    Sys[ind['C2H4'],0] = 3.0
+    Sys[ind['NO'],0]   = 0.375
+    Sys[ind['NO2'],0]  = 0.125
     
     # Loop through the simulation period
-    # Array index - i
-    i = 1
-    tn = tn + dt
-    #print(C2H4[0])
-    #print(HOCH2CH2O2[0])
-    #print(H2[10])
-    #print(HOCH2CH2O2[i-1])
-    #print(HO2.size)
-    #while(tn<=tm):
-
+    while(tn<=tm):
+        tn += dt
+        i = int(tn/dt)
+        j = int((tn-dt)/dt)
+        argO     = [tn, Sys[ind['NO2'],j]]
+        argHO2   = [Sys[ind['HOCHb'],j], Sys[ind['NO'],j],  \
+                    Sys[ind['C2H4'],j]]
+        argOH    = [Sys[ind['HO2'],j],   Sys[ind['NO'],j],  \
+                    Sys[ind['CH2OH'],j], Sys[ind['NO2'],j], \
+                    Sys[ind['C2H4'],j]]
+        argHOCHb = [Sys[ind['C2H4'],j],  Sys[ind['OH'],j],  \
+                    Sys[ind['NO'],j]]
+        argCH2OH = [Sys[ind['HOCHb'],j], Sys[ind['NO'],j]]
         # Solve PSSA
-        #O[i]   = pssaO(tn,NO2[i-1])
-        #HO2[i] = pssaHO2(HOCH2CH2O2[i-1], NO[i-1], C2H4[i-1])
-        #OH[i]  = pssaOH(HO2[i-1], NO[i-1], CH2OH[i-1], NO2[i-1], C2H4[i-1])
-        #HOCH2CH2O2[i] = pssaHOCH2CH2O2(C2H4[i-1], OH[i-1], NO[i-1])
-        #CH2OH[i] = pssaCH2OH(HOCH2CH2O2[i-1], NO[i-1]) 
+        Sys[ind['O'],    i] = pssaO(*argO)
+        Sys[ind['HO2'],  i] = pssaHO2(*argHO2)
+        Sys[ind['OH'],   i] = pssaOH(*argOH)
+        Sys[ind['HOCHb'],i] = pssaHOCH2CH2O2(*argHOCHb)
+        Sys[ind['CH2OH'],i] = pssaCH2OH(*argCH2OH)
 
         # Step Diff Eqs
-        #NO2[i]      = rk.rk4(tn, NO2[i-1],   dt, diffNO2, argNO2)
-        #NO[i]       = rk.rk4(tn, NO[i-1],    dt, diffNO, argNO)
-        #O[i]        = rk.rk4(tn, O[i-1],     dt, diffO, [NO2[i-1]])
-        #O3[i]       = rk.rk4(tn, O3[i-1],    dt, diffO3, argO3)
-        #H2[i]       = rk.rk4(tn, H2[i-1],    dt, diffH2, argH2)
-        #CO[i]       = rk.rk4(tn, CO[i-1],    dt, diffCO, argCO)
-        #HNO3[i]     = rk.rk4(tn, HNO3[i-1],  dt, diffHNO3, argHNO3)
-        #C2H4[i]     = rk.rk4(tn, C2H4[i-1],  dt, diffC2H4, argC2H4)
-        #HCHO[i]     = rk.rk4(tn, HCHO[i-1],  dt, diffHCHO, argHCHO)
-        #H2COO[i]    = rk.rk4(tn, H2COO[i-1], dt, diffH2COO, argH2COO)
-        #HCOOH[i]    = rk.rk4(tn, HCOOH[i-1], dt, diffHCOOH, [H2COO[i-1]])
-        #HOCH2CHO[i] = rk.rk4(tn, HOCH2CHO[i-1], dt, diffHOCH2CHO, argHOCH2CHO)
+        Sys[:,i] = rk.rk4(tn, Sys[:,j], dt, diffSys, [Sys[:,i]])
 
-        # print("")
-        # print("Current State")
-        # print("i:          {0:11d}".format(i))
-        # print("tn:         {0:11.4f}".format(tn))
-        # print("C2H4:       {0:11.4f}".format(C2H4[i]))
-        # print("O:          {0:11.4f}".format(O[i]))
-        # print("O2:         {0:11.4f}".format(O2))
-        # print("O3:         {0:11.4f}".format(O3[i]))
-        # print("NO:         {0:11.4f}".format(NO[i]))
-        # print("NO2:        {0:11.4f}".format(NO2[i]))
-        # print("OH:         {0:11.4f}".format(OH[i]))
-        # print("HO2:        {0:11.4f}".format(HO2[i]))
-        # print("HNO3:       {0:11.4f}".format(HNO3[i]))
-        # print("HCHO:       {0:11.4f}".format(HCHO[i]))
-        # print("CH2OH:      {0:11.4f}".format(CH2OH[i]))
-        # print("H2COO:      {0:11.4f}".format(H2COO[i]))
-        # print("CO2:        {0:11.4f}".format(CO2))
-        # print("CO:         {0:11.4f}".format(CO[i]))
-        # print("H2:         {0:11.4f}".format(H2[i]))
-        # print("H2O:        {0:11.4f}".format(H2O))
-        # print("HCOOH:      {0:11.4f}".format(HCOOH[i]))
-        # print("M:          {0:11.4f}".format(M))
-        # print("HOCH2CHO:   {0:11.4f}".format(HOCH2CHO[i]))
-        # print("HOCH2CH2O2: {0:11.4f}".format(HOCH2CH2O2[i]))
-        # print("k1:         {0:11.9f}".format(k1(tn)))
-        # print("")
-
-        # Take a step
-        #tn += dt
-        #i  += 1
+        print("")
+        print("Current State")
+        print("i:          {0:11d}".format(i))
+        print("tn:         {0:11.4f}".format(tn))
+        print("C2H4:       {0:11.4f}".format(Sys[ind['C2H4'],i]))
+        print("O:          {0:11.4f}".format(Sys[ind['O'],i]))
+        print("O2:         {0:11.4f}".format(O2))
+        print("O3:         {0:11.4f}".format(Sys[ind['O3'],i]))
+        print("NO:         {0:11.4f}".format(Sys[ind['NO'],i]))
+        print("NO2:        {0:11.4f}".format(Sys[ind['NO2'],i]))
+        print("OH:         {0:11.4f}".format(Sys[ind['OH'],i]))
+        print("HO2:        {0:11.4f}".format(Sys[ind['HO2'],i]))
+        print("HNO3:       {0:11.4f}".format(Sys[ind['HNO3'],i]))
+        print("HCHO:       {0:11.4f}".format(Sys[ind['HCHO'],i]))
+        print("CH2OH:      {0:11.4f}".format(Sys[ind['CH2OH'],i]))
+        print("H2COO:      {0:11.4f}".format(Sys[ind['H2COO'],i]))
+        print("CO2:        {0:11.4f}".format(CO2))
+        print("CO:         {0:11.4f}".format(Sys[ind['CO'],i]))
+        print("H2:         {0:11.4f}".format(Sys[ind['H2'],i]))
+        print("H2O:        {0:11.4f}".format(H2O))
+        print("HCOOH:      {0:11.4f}".format(Sys[ind['HCOOH'],i]))
+        print("M:          {0:11.4f}".format(M))
+        print("HOCH2CHO:   {0:11.4f}".format(Sys[ind['HOCHa'],i]))
+        print("HOCH2CH2O2: {0:11.4f}".format(Sys[ind['HOCHb'],i]))
+        print("k1:         {0:11.9f}".format(k1(tn)))
+        print("")
 
     # Plot the results
     # Time Vector
-    #time = np.arange(0.0, tm, dt)
+    time = np.arange(0.0, tm, dt)
     # Ozone
-    #plt.plot(time, O3)
+    plt.plot(time, Sys[ind['O3',:]])
     # Nitric Oxide
-    #plt.plot(time, NO)
+    plt.plot(time, Sys[ind['NO',:]])
     # Nitrogen Dioxide
     # Ethane
     # Hydroxyl
