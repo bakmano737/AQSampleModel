@@ -136,12 +136,13 @@ ind = dict(C2H4  = 0,
 # Single Function for all diff eqs
 # t - current time of simulation
 # Sys - dictionary
-def diffSys(t, Sys_0, Sys_1):
+def diffSys(t, Sys):
     #Evaluate all diff eqs
+    newSys = Sys
     for spec,func in diffFunc.items():
-        fargs = [Sys_0[ind[args]] for args in diffArgs[spec]]
-        Sys_1[ind[spec]] = func(t,Sys_0[ind[spec]],*fargs)
-    return Sys_1
+        fargs = [Sys[ind[args]] for args in diffArgs[spec]]
+        newSys[ind[spec]] = func(t,Sys[ind[spec]],*fargs)
+    return newSys
 
 # Solving Procedure
 def solve():
@@ -176,14 +177,15 @@ def solve():
         argCH2OH = [Sys[ind['HOCHb'], j], Sys[ind['NO'], j]]
         
         # Solve PSSA
-        Sys[ind['O'],    i] = pssaO(*argO)
-        Sys[ind['HO2'],  i] = pssaHO2(*argHO2)
-        Sys[ind['OH'],   i] = pssaOH(*argOH)
-        Sys[ind['HOCHb'],i] = pssaHOCH2CH2O2(*argHOCHb)
-        Sys[ind['CH2OH'],i] = pssaCH2OH(*argCH2OH)
+        newSys = Sys[:,j]
+        newSys[ind['O']] = pssaO(*argO)
+        newSys[ind['HO2']] = pssaHO2(*argHO2)
+        newSys[ind['OH']] = pssaOH(*argOH)
+        newSys[ind['HOCHb']] = pssaHOCH2CH2O2(*argHOCHb)
+        newSys[ind['CH2OH']] = pssaCH2OH(*argCH2OH)
 
         # Step Diff Eqs
-        Sys[:,i] = rk.rk4(tn, Sys[:,j], dt, diffSys, [Sys[:,i]])
+        Sys[:,i] = rk.rk4(tn, newSys, dt, diffSys, [])
 
         # print("")
         # print("Current State")
