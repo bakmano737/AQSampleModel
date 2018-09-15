@@ -1,3 +1,4 @@
+#! python3.7
 import numpy as np
 import rungekutta as rk
 from matplotlib import pyplot as plt
@@ -146,20 +147,20 @@ def diffSys(t, Sys_0, Sys_1):
 def solve():
     # Simulation parameters
     tn = 0.0 #minutes
-    dt = 1.0e-4 #minutes
+    dt = 1.0e-2 #minutes
     tm = 12.0*60.0 #minutes
     st = int(tm/dt)
     N = 16
     # All initialize to zero
-    Sys = np.zeros((N,st+1))
+    Sys = np.zeros((N,st))
     # Initialize (ppm)
     Sys[ind['C2H4'],0] = 3.0
     Sys[ind['NO'],0]   = 0.375
     Sys[ind['NO2'],0]  = 0.125
     
     # Loop through the simulation period
-    while(tn<=tm):
-        tn += dt
+    tn += dt
+    while(tn<tm):
         i = int(tn/dt)
         j = int((tn-dt)/dt)
 
@@ -210,6 +211,7 @@ def solve():
         # print("HOCH2CH2O2: {0:11.4f}".format(Sys[ind['HOCHb'],i]))
         # print("k1:         {0:11.9f}".format(kr1(tn)))
         # print("")
+        tn += dt
 
     # Plot the results
     # Time Vector
@@ -222,5 +224,6 @@ def solve():
     # Ethane
     # Hydroxyl
     # Nitric Acid
+    plt.show()
 
 solve()
