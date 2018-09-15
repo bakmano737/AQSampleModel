@@ -138,7 +138,7 @@ ind = dict(C2H4  = 0,
 # Sys - dictionary
 def diffSys(t, Sys):
     #Evaluate all diff eqs
-    newSys = Sys
+    newSys = np.copy(Sys)
     for spec,func in diffFunc.items():
         fargs = [Sys[ind[args]] for args in diffArgs[spec]]
         newSys[ind[spec]] = func(t,Sys[ind[spec]],*fargs)
@@ -148,7 +148,7 @@ def diffSys(t, Sys):
 def solve():
     # Simulation parameters
     tn = 0.0 #minutes
-    dt = 1.0e-2 #minutes
+    dt = 1.0e-3 #minutes
     tm = 12.0*60.0 #minutes
     st = int(tm/dt)
     N = 16
@@ -177,7 +177,7 @@ def solve():
         argCH2OH = [Sys[ind['HOCHb'], j], Sys[ind['NO'], j]]
         
         # Solve PSSA
-        newSys = Sys[:,j]
+        newSys = np.copy(Sys[:,j])
         newSys[ind['O']] = pssaO(*argO)
         newSys[ind['HO2']] = pssaHO2(*argHO2)
         newSys[ind['OH']] = pssaOH(*argOH)
