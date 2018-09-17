@@ -156,8 +156,8 @@ def solve():
     Sys = np.zeros((N,st))
     # Initialize (ppm)
     Sys[ind['C2H4'],0] = 3.0
-    Sys[ind['NO'],0]   = 0.3
-    Sys[ind['NO2'],0]  = 0.1
+    Sys[ind['NO'],0]   = 0.375
+    Sys[ind['NO2'],0]  = 0.125
     
     # Loop through the simulation period
     tn += dt
@@ -216,7 +216,7 @@ def solve():
         tn += dt
 
     # It's over!!!
-    np.savetxt("Prob6.csv",Sys.T,delimiter=",")
+    np.savetxt("Prob4.csv",Sys.T,delimiter=",")
     print("ITS OVER")
     # Plot the results
     # Time Vector
@@ -225,7 +225,7 @@ def solve():
     plt.plot(time, Sys[ind['O3'],:])
     plt.xlabel('Time [mins]')
     plt.ylabel('Concentration of Ozone (O3) [ppm]')
-    plt.suptitle('Ozone (NOx Reduced)')
+    plt.suptitle('Ozone: C2H2=3.0, NO=0.375, NO2=0.125 [ppm]')
     plt.show()
     # # Nitric Oxide
     # plt.plot(time, Sys[ind['NO'],:])
