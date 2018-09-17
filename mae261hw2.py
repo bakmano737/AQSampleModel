@@ -156,8 +156,8 @@ def solve():
     Sys = np.zeros((N,st))
     # Initialize (ppm)
     Sys[ind['C2H4'],0] = 3.0
-    Sys[ind['NO'],0]   = 0.375
-    Sys[ind['NO2'],0]  = 0.125
+    Sys[ind['NO'],0]   = 0.3
+    Sys[ind['NO2'],0]  = 0.1
     
     # Loop through the simulation period
     tn += dt
@@ -165,7 +165,7 @@ def solve():
         i = int(tn/dt)
         j = int((tn-dt)/dt)
 
-        # Gather PSSA dependents for easier reading
+        # Gather PSSA 3ependents for easier reading
         argO     = [tn, Sys[ind['NO2'],j]]
         argHO2   = [Sys[ind['HOCHb'], j], Sys[ind['NO'], j], \
                     Sys[ind['C2H4'],  j], Sys[ind['O3'], j]]
@@ -215,6 +215,9 @@ def solve():
         # print("")
         tn += dt
 
+    # It's over!!!
+    np.savetxt("Prob6.csv",Sys.T,delimiter=",")
+    print("ITS OVER")
     # Plot the results
     # Time Vector
     time = np.arange(0.0, tm, dt)
@@ -222,37 +225,37 @@ def solve():
     plt.plot(time, Sys[ind['O3'],:])
     plt.xlabel('Time [mins]')
     plt.ylabel('Concentration of Ozone (O3) [ppm]')
-    plt.suptitle('Ozone')
+    plt.suptitle('Ozone (NOx Reduced)')
     plt.show()
-    # Nitric Oxide
-    plt.plot(time, Sys[ind['NO'],:])
-    plt.xlabel('Time [mins]')
-    plt.ylabel('Concentration of Nitric Oxide (NO) [ppm]')
-    plt.suptitle('Nitric Oxide')
-    plt.show()
-    # Nitrogen Dioxide
-    plt.plot(time, Sys[ind['NO2'],:])
-    plt.xlabel('Time [mins]')
-    plt.ylabel('Concentration of Nitrogen Dioxide (NO2) [ppm]')
-    plt.suptitle('Nitrogen Dioxide')
-    plt.show()
-    # Ethane
-    plt.plot(time, Sys[ind['C2H4'],:])
-    plt.xlabel('Time [mins]')
-    plt.ylabel('Concentration of Ethane (C2H4) [ppm]')
-    plt.suptitle('Ethane')
-    plt.show()
-    # Hydroxyl
-    plt.plot(time, Sys[ind['OH'],:])
-    plt.xlabel('Time [mins]')
-    plt.ylabel('Concentration of Hydroxyl (OH) [ppm]')
-    plt.suptitle('Hydroxyl')
-    plt.show()
-    # Nitric Acid
-    plt.plot(time, Sys[ind['HNO3'],:])
-    plt.xlabel('Time [mins]')
-    plt.ylabel('Concentration of Nitric Acid (HNO3) [ppm]')
-    plt.suptitle('Nitric Acid')
-    plt.show()
+    # # Nitric Oxide
+    # plt.plot(time, Sys[ind['NO'],:])
+    # plt.xlabel('Time [mins]')
+    # plt.ylabel('Concentration of Nitric Oxide (NO) [ppm]')
+    # plt.suptitle('Nitric Oxide (C2H4_0 = 1ppm)')
+    # plt.show()
+    # # Nitrogen Dioxide
+    # plt.plot(time, Sys[ind['NO2'],:])
+    # plt.xlabel('Time [mins]')
+    # plt.ylabel('Concentration of Nitrogen Dioxide (NO2) [ppm]')
+    # plt.suptitle('Nitrogen Dioxide (C2H4_0 = 1ppm)')
+    # plt.show()
+    # # Ethane
+    # plt.plot(time, Sys[ind['C2H4'],:])
+    # plt.xlabel('Time [mins]')
+    # plt.ylabel('Concentration of Ethane (C2H4) [ppm]')
+    # plt.suptitle('Ethane (C2H4_0 = 1ppm)')
+    # plt.show()
+    # # Hydroxyl
+    # plt.plot(time, Sys[ind['OH'],:])
+    # plt.xlabel('Time [mins]')
+    # plt.ylabel('Concentration of Hydroxyl (OH) [ppm]')
+    # plt.suptitle('Hydroxyl (C2H4_0 = 1ppm)')
+    # plt.show()
+    # # Nitric Acid
+    # plt.plot(time, Sys[ind['HNO3'],:])
+    # plt.xlabel('Time [mins]')
+    # plt.ylabel('Concentration of Nitric Acid (HNO3) [ppm]')
+    # plt.suptitle('Nitric Acid (C2H4_0 = 1ppm)')
+    # plt.show()
 
 solve()
