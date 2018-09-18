@@ -35,18 +35,22 @@ def pssaO(t, NO2):
 def pssaOH(HO2, NO, CH2OH, NO2, C2H4):
     nom = kr4*HO2*NO + kr8*CH2OH*O2
     den = kr5*NO2 + kr6*C2H4
-    return nom/den
+    return nom/den if den > 0.0 else 0.0
 
 def pssaHO2(HOCH2CH2O2, NO, C2H4, O3):
     nom = 0.28*kr7*HOCH2CH2O2*NO + 0.12*kr9*C2H4*O3
     den = kr4*NO
-    return nom/den
+    return nom/den if den > 0.0 else 0.0
 
 def pssaHOCH2CH2O2(C2H4, OH, NO):
-    return kr6*C2H4*OH/(kr7*NO)
+    nom = kr6*C2H4*OH
+    den = kr7*NO
+    return nom/den if den > 0.0 else 0.0
 
 def pssaCH2OH(HOCH2CH2O2, NO):
-    return 0.72*kr7*HOCH2CH2O2*NO/(kr8*O2)
+    nom = 0.72*kr7*HOCH2CH2O2*NO
+    den = kr8*O2
+    return nom/den if den > 0.0 else 0.0
 
 # Active Species DiffEq Functions
 def diffC2H4(t, C2H4, OH, O3):
@@ -136,12 +140,16 @@ ind = dict(C2H4  = 0,
 # Single Function for all diff eqs
 # t - current time of simulation
 # Sys - dictionary
-def diffSys(t, Sys):
+def diffSys(t, SysA, SysB):
+    #SysA has concs at start of t
+    #SysA gets modified by rk4 (yn+k1*dt/2)
+    #SysB has SysA + PSSA concs for t
+    #SysB is NOT modified by rk4
     #Evaluate all diff eqs
-    newSys = np.copy(Sys)
+    newSys = np.copy(SysA)
     for spec,func in diffFunc.items():
-        fargs = [Sys[ind[args]] for args in diffArgs[spec]]
-        newSys[ind[spec]] = func(t,Sys[ind[spec]],*fargs)
+        fargs = [SysB[ind[args]] for args in diffArgs[spec]]
+        newSys[ind[spec]] = func(t,SysA[ind[spec]],*fargs)
     return newSys
 
 # Solving Procedure
@@ -163,7 +171,7 @@ def solve():
     tn += dt
     while(tn<tm):
         i = int(tn/dt)
-        j = int((tn-dt)/dt)
+        j = i-1
 
         # Gather PSSA 3ependents for easier reading
         argO     = [tn, Sys[ind['NO2'],j]]
@@ -185,7 +193,7 @@ def solve():
         newSys[ind['CH2OH']] = pssaCH2OH(*argCH2OH)
 
         # Step Diff Eqs
-        Sys[:,i] = rk.rk4(tn, newSys, dt, diffSys, [])
+        Sys[:,i] = rk.rk4(tn, Sys[:,j], dt, diffSys, [newSys])
 
         # print("")
         # print("Current State")
@@ -228,6 +236,13 @@ def solve():
     plt.suptitle('Ozone: C2H2=3.0, NO=0.375, NO2=0.125 [ppm]')
     plt.show()
     # # Nitric Oxide
+    Sys2 = np.copy(Sys)
+    Sys2[:,np.where(~Sys2.any(axis=0))[0]] = Sys2[:,np.where(~Sys2.any(axis=0))[0]-1]
+    plt.plot(time, Sys2[ind['O3'],:])
+    plt.xlabel('Time [mins]')
+    plt.ylabel('Concentration of Ozone (O3) [ppm]')
+    plt.suptitle('Ozone: C2H2=3.0, NO=0.375, NO2=0.125 [ppm]')
+    plt.show()
     # plt.plot(time, Sys[ind['NO'],:])
     # plt.xlabel('Time [mins]')
     # plt.ylabel('Concentration of Nitric Oxide (NO) [ppm]')
