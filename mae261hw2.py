@@ -173,8 +173,9 @@ def solve():
     
     # Loop through the simulation period
     tn += dt
-    while(tn<tm):
-        i = int(tn/dt)
+    i = 1
+    while(i<st):
+        #i = int(tn/dt)
         j = i-1
 
         # Gather PSSA 3ependents for easier reading
@@ -232,6 +233,7 @@ def solve():
         # print("k1:         {0:11.9f}".format(kr1(tn)))
         # print("")
         tn += dt
+        i  += 1
 
     # It's over!!!
     np.savetxt("Prob4.csv",Sys.T,delimiter=",")
