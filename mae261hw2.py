@@ -213,65 +213,43 @@ def plotAll(Sys,tm,dt,fig):
     # Plot the results
     # Time Vector
     time = np.arange(0.0, tm, dt)
-    # Initial Conditions
+    # Grab Initial Conditions (for title)
     C2H4_0 = Sys[ind['C2H4'],0]
     NO_0   = Sys[ind['NO'],  0]
     NO2_0  = Sys[ind['NO2'], 0]
+    # Define the arrow properties for max callout
+    # only need to do this once
     arwprp = dict(width=1.5,facecolor='black',headwidth=2.5)
+    # Iterate through all non-constant species
     for spec in ind.keys():
+        # Get the index of max value
         mxi=Sys[ind[spec],:].argmax()
-        print("mxi:{0:4g}".format(mxi))
+        # Get the value at max index
         mxv=Sys[ind[spec],mxi]
-        print("mxv:{0:4g}".format(mxv))
+        # Determine the time of max index
         mxt=mxi*dt
-        print("mxt:{0:4g}".format(mxt))
+        # Plot the concentration vs. time
         plt.plot(time, Sys[ind[spec],:])
-        lbl="Max:{0:4g},{1:4g}".format(mxt,mxv)
-        plt.annotate(lbl,xy=(mxt,mxv),xytext=(0,-30),textcoords='offset points',arrowprops=arwprp)
+        # Label the maximum point
+        lbl="Max:{0:5.4g},{1:5.4g}".format(mxt,mxv)
+        # Annotation properties
+        crd='offset points'
+        prm=dict(xy=(mxt,mxv),xytext=(0,-30),textcoords=crd,arrowprops=arwprp)
+        # Place the annotation (max label)
+        plt.annotate(lbl,**prm)
+        # Label the axes
         plt.xlabel('Time [mins]')
         plt.ylabel("Concentration of {0} [ppm]".format(spec))
-        ttl="{0}\nC2H4={1:6.4f},NO={2:6.4f},NO2={3:6.4f}".format(spec,C2H4_0,NO_0,NO2_0)
-        plt.suptitle(ttl)
+        # Add a title to indicate the species and initial conditions
+        ttl="{0}".format(spec)
+        sub="\nC2H4={0:5.4g},NO={1:5.4g},NO2={2:5.4g}".format(C2H4_0,NO_0,NO2_0)
+        plt.suptitle(ttl+sub)
+        # Save the plot to output files
         fil="{0}".format(spec)
         plt.savefig(fil+fig+"_annotated.pdf")
         plt.savefig(fil+fig+"_annotated.png")
+        # Display the plot
         plt.show()
-
-# def plot4(Sys):
-#     # Problem 4 asks for plots of:
-#     # O3, NO, NO2, C2H4, OH, HNO3
-
-#     # Plot Ozone calling out maximum
-#     # Determine Maximum Point
-#     mxx = Sys[ind['O3'],:].argmax()
-#     mxy = Sys[ind['O3'],mxx]
-#     mxt = mxx*1e-3
-#     # Time Vector
-#     t = np.arange(0.0,720.0,1e-3)
-#     # Plot
-#     plt.plot(t,Sys[ind['O3'],:],lw=2)
-#     # Annotation
-#     lbl="Max:{0:5.1f},{1:6.4f}".format(mxi,mxv)
-#     plt.annotate(lbl,xy=(mxt,mxy)
-
-def plotSpec(Sys,tm,dt,spec,fig):
-    # Plot a specific species
-    # spec must match a key in ind
-    # Time Vector
-    time = np.arange(0.0, tm, dt)
-    # Initial Conditions
-    C2H4_0 = Sys[ind['C2H4',0]]
-    NO_0   = Sys[ind['NO',  0]]
-    NO2_0  = Sys[ind['NO2', 0]]
-    plt.plot(time, Sys[ind[spec],:])
-    plt.xlabel('Time [mins]')
-    plt.ylabel("Concentration of {0} [ppm]".format(spec))
-    ttl="{0}\nC2H4={1:6.4f},NO={2:6.4f},NO2={3:6.4f}".format(spec,C2H4_0,NO_0,NO2_0)
-    plt.suptitle(ttl)
-    plt.savefig(fig+".pdf")
-    plt.savefig(fig+".png")
-    plt.show()
-    
 
 def Prob4():
     # Initial Conditions
@@ -279,10 +257,13 @@ def Prob4():
     Sys_0[ind['C2H4']] = 3.0
     Sys_0[ind['NO']]   = 0.375
     Sys_0[ind['NO2']]  = 0.125
+    # Solve
     Sys = solve(Sys_0)
-    plotAll(Sys,720,1e-3,"_prob4")
+    # Plot
+    plotAll(Sys,720,1e-3,"_prob4_annotated_91918")
 
 def Prob5():
+    """ This would parallel nicely..."""
     ### Initializing
     Sys_01  = np.zeros(16)
     Sys_02  = np.zeros(16)
@@ -300,43 +281,68 @@ def Prob5():
     Sys_01[ind['NO2']]  = 0.125
     Sys_03[ind['NO2']]  = 0.125
     Sys_04[ind['NO2']]  = 0.125
-
     ### Solving
     Sys1 = solve(Sys_01)
     Sys2 = solve(Sys_02)
     Sys3 = solve(Sys_03)
     Sys4 = solve(Sys_04)
-    
     ### Plotting 
     # Time Vector
-    time = np.arange(0.0, 720, 1e-3)
+    dt = 1e-3
+    tm = 720.0
+    time = np.arange(0.0, tm, dt)
+    # Constant Properties
+    arwprp = dict(width=1.5,facecolor='black',headwidth=2.5)
+    crd = 'offset points'
     # Maximum Positions
     mxi1 = Sys1[ind['O3'],:].argmax()
     mxi2 = Sys2[ind['O3'],:].argmax()
     mxi3 = Sys3[ind['O3'],:].argmax()
     mxi4 = Sys4[ind['O3'],:].argmax()
+    # Maximum Values
     mxv1 = Sys1[ind['O3'],mxi1]
     mxv2 = Sys2[ind['O3'],mxi2]
     mxv3 = Sys3[ind['O3'],mxi3]
     mxv4 = Sys4[ind['O3'],mxi4]
+    # Time associated with max positions
+    mxt1 = mxi1*dt
+    mxt2 = mxi2*dt
+    mxt3 = mxi3*dt
+    mxt4 = mxi4*dt
+    # Plotting proper
     plt.plot(time,Sys1[ind['O3'],:],color='r',label='1ppm')
     plt.plot(time,Sys2[ind['O3'],:],color='g',label='2ppm')
     plt.plot(time,Sys3[ind['O3'],:],color='b',label='3ppm')
     plt.plot(time,Sys4[ind['O3'],:],color='y',label='4ppm')
-    plt.annotate("Max: {0:5.1f},{1:6.4f}",xy=(mxi1,mxv1))
-    plt.annotate("Max: {0:5.1f},{1:6.4f}",xy=(mxi2,mxv2))
-    plt.annotate("Max: {0:5.1f},{1:6.4f}",xy=(mxi3,mxv3))
-    plt.annotate("Max: {0:5.1f},{1:6.4f}",xy=(mxi4,mxv4))
+    # Annotation Properties
+    props1 = dict(xy=(mxt1,mxv1),xytext=(0,-20),textcoords=crd,arrowprops=arwprp)
+    props2 = dict(xy=(mxt2,mxv2),xytext=(0,+20),textcoords=crd,arrowprops=arwprp)
+    props3 = dict(xy=(mxt3,mxv3),xytext=(0,+20),textcoords=crd,arrowprops=arwprp)
+    props4 = dict(xy=(mxt4,mxv4),xytext=(0,-20),textcoords=crd,arrowprops=arwprp)
+    # Annotation Labels
+    label1 = "Max: {0:5.4g},{1:5.4g}".format(mxt1,mxv1)
+    label2 = "Max: {0:5.4g},{1:5.4g}".format(mxt2,mxv2)
+    label3 = "Max: {0:5.4g},{1:5.4g}".format(mxt3,mxv3)
+    label4 = "Max: {0:5.4g},{1:5.4g}".format(mxt4,mxv4)
+    # Annotate maximum points
+    plt.annotate(label1,**props1)
+    plt.annotate(label2,**props2)
+    plt.annotate(label3,**props3)
+    plt.annotate(label4,**props4)
+    # Labels and legend
     plt.xlabel('Time [mins]')
     plt.ylabel("Concentration of Ozone [ppm]")
     plt.suptitle("Ozone - Varying Ethane Initial Concentration")
     plt.legend()
-    plt.savefig("Prob5.pdf")
-    plt.savefig("Prob5.png")
+    # Save the figure and display
+    plt.savefig("Prob5_annotated_91918.pdf")
+    plt.savefig("Prob5_annotated_91918.png")
     plt.show()
 
 def Prob6():
     ### Initializing
+    dt = 1e-3
+    tm = 720.0
     Sys_0 = np.zeros(16)
     Sys_1 = np.zeros(16)
     Sys_0[ind['C2H4']] = 3.0
@@ -348,16 +354,31 @@ def Prob6():
     ### Solving
     Sys0 = solve(Sys_0)
     Sys1 = solve(Sys_1)
+    ### Annotating
+    mxi0 = Sys0[ind['O3'],:].argmax()
+    mxi1 = Sys1[ind['O3'],:].argmax()
+    mxv0 = Sys0[ind['O3'],mxi1]
+    mxv1 = Sys1[ind['O3'],mxi1]
+    mxt0 = mxi0*dt
+    mxt1 = mxi1*dt
+    crd = 'offset points'
+    arwprp = dict(width=1.5,facecolor='black',headwidth=2.5)
+    props0 = dict(xy=(mxt0,mxv0),xytext=(-50,+20),textcoords=crd,arrowprops=arwprp)
+    props1 = dict(xy=(mxt1,mxv1),xytext=(-50,-20),textcoords=crd,arrowprops=arwprp)
+    label0 = "Max:{0:5.4g},{1:5.4g}".format(mxt0,mxv0)
+    label1 = "Max:{0:5.4g},{1:5.4g}".format(mxt1,mxv1)
     ### Plotting 
-    time = np.arange(0.0, 720, 1e-3)
+    time = np.arange(0.0, tm, dt)
     plt.plot(time,Sys0[ind['O3'],:],color='r',label='Original')
     plt.plot(time,Sys1[ind['O3'],:],color='g',label='Reduced NOx')
+    plt.annotate(label0,**props0)
+    plt.annotate(label1,**props1)
     plt.xlabel('Time [mins]')
     plt.ylabel("Concentration of Ozone [ppm]")
     plt.suptitle("Reduced NOx Scenario Comparison")
     plt.legend()
-    plt.savefig("Prob6.pdf")
-    plt.savefig("Prob6.png")
+    plt.savefig("Prob6_annotated_91918.pdf")
+    plt.savefig("Prob6_annotated_91918.png")
     plt.show()
 
 def PrintState(tn, i, Sys):
@@ -388,6 +409,6 @@ def PrintState(tn, i, Sys):
     print("k1:         {0:11.9f}".format(kr1(tn)))
     print("")
 
-Prob4()
+#Prob4()
 #Prob5()
-#Prob6()
+Prob6()
