@@ -145,19 +145,17 @@ def diffSys(t, Sys):
     return newSys
 
 # Solving Procedure
-def solve():
+def solve(Sys0):
     # Simulation parameters
     tn = 0.0 #minutes
     dt = 1.0e-3 #minutes
     tm = 12.0*60.0 #minutes
     st = int(tm/dt)
     N = 16
-    # All initialize to zero
+    # Preallocate Arrays for Conc vs. Time
     Sys = np.zeros((N,st))
-    # Initialize (ppm)
-    Sys[ind['C2H4'],0] = 3.0
-    Sys[ind['NO'],0]   = 0.3
-    Sys[ind['NO2'],0]  = 0.1
+    # Get Initial Values
+    Sys[:,0] = np.copy(Sys0)
     
     # Loop through the simulation period
     tn += dt
@@ -187,75 +185,79 @@ def solve():
         # Step Diff Eqs
         Sys[:,i] = rk.rk4(tn, newSys, dt, diffSys, [])
 
-        # print("")
-        # print("Current State")
-        # print("i:          {0:11d}".format(i))
-        # print("tn:         {0:11.7f}".format(tn))
-        # print("C2H4:       {0:11.7f}".format(Sys[ind['C2H4'],i]))
-        # print("O:          {0:11.7f}".format(Sys[ind['O'],i]))
-        # print("O3:         {0:11.7f}".format(Sys[ind['O3'],i]))
-        # print("NO:         {0:11.7f}".format(Sys[ind['NO'],i]))
-        # print("NO2:        {0:11.7f}".format(Sys[ind['NO2'],i]))
-        # print("OH:         {0:11.7f}".format(Sys[ind['OH'],i]))
-        # print("HO2:        {0:11.7f}".format(Sys[ind['HO2'],i]))
-        # print("HNO3:       {0:11.7f}".format(Sys[ind['HNO3'],i]))
-        # print("HCHO:       {0:11.7f}".format(Sys[ind['HCHO'],i]))
-        # print("CH2OH:      {0:11.7f}".format(Sys[ind['CH2OH'],i]))
-        # print("H2COO:      {0:11.7f}".format(Sys[ind['H2COO'],i]))
-        # print("CO:         {0:11.7f}".format(Sys[ind['CO'],i]))
-        # print("H2:         {0:11.7f}".format(Sys[ind['H2'],i]))
-        # print("HCOOH:      {0:11.7f}".format(Sys[ind['HCOOH'],i]))
-        # print("HOCH2CHO:   {0:11.7f}".format(Sys[ind['HOCHa'],i]))
-        # print("HOCH2CH2O2: {0:11.7f}".format(Sys[ind['HOCHb'],i]))
-        # print("O2:         {0:11.0f}".format(O2))
-        # print("H2O:        {0:11.0f}".format(H2O))
-        # print("CO2:        {0:11.0f}".format(CO2))
-        # print("M:          {0:11.0f}".format(M))
-        # print("k1:         {0:11.9f}".format(kr1(tn)))
-        # print("")
         tn += dt
+    return Sys
 
-    # It's over!!!
-    np.savetxt("Prob6.csv",Sys.T,delimiter=",")
-    print("ITS OVER")
+def plotAll(Sys,tm,dt):
     # Plot the results
     # Time Vector
     time = np.arange(0.0, tm, dt)
-    # Ozone
-    plt.plot(time, Sys[ind['O3'],:])
-    plt.xlabel('Time [mins]')
-    plt.ylabel('Concentration of Ozone (O3) [ppm]')
-    plt.suptitle('Ozone (NOx Reduced)')
-    plt.show()
-    # # Nitric Oxide
-    # plt.plot(time, Sys[ind['NO'],:])
-    # plt.xlabel('Time [mins]')
-    # plt.ylabel('Concentration of Nitric Oxide (NO) [ppm]')
-    # plt.suptitle('Nitric Oxide (C2H4_0 = 1ppm)')
-    # plt.show()
-    # # Nitrogen Dioxide
-    # plt.plot(time, Sys[ind['NO2'],:])
-    # plt.xlabel('Time [mins]')
-    # plt.ylabel('Concentration of Nitrogen Dioxide (NO2) [ppm]')
-    # plt.suptitle('Nitrogen Dioxide (C2H4_0 = 1ppm)')
-    # plt.show()
-    # # Ethane
-    # plt.plot(time, Sys[ind['C2H4'],:])
-    # plt.xlabel('Time [mins]')
-    # plt.ylabel('Concentration of Ethane (C2H4) [ppm]')
-    # plt.suptitle('Ethane (C2H4_0 = 1ppm)')
-    # plt.show()
-    # # Hydroxyl
-    # plt.plot(time, Sys[ind['OH'],:])
-    # plt.xlabel('Time [mins]')
-    # plt.ylabel('Concentration of Hydroxyl (OH) [ppm]')
-    # plt.suptitle('Hydroxyl (C2H4_0 = 1ppm)')
-    # plt.show()
-    # # Nitric Acid
-    # plt.plot(time, Sys[ind['HNO3'],:])
-    # plt.xlabel('Time [mins]')
-    # plt.ylabel('Concentration of Nitric Acid (HNO3) [ppm]')
-    # plt.suptitle('Nitric Acid (C2H4_0 = 1ppm)')
-    # plt.show()
+    # Initial Conditions
+    C2H4_0 = Sys[ind['C2H4',0]]
+    NO_0   = Sys[ind['NO',  0]]
+    NO2_0  = Sys[ind['NO2', 0]]
+    for spec in ind.keys():
+        plt.plot(time, Sys[ind[spec],:])
+        plt.xlabel('Time [mins]')
+        plt.ylabel("Concentration of {0} [ppm]".format(spec))
+        ttl="{0}\nC2H4={1:6.4f},NO={2:6.4f},NO2={3:6.4f}".format(spec,C2H4_0,NO_0,NO2_0)
+        plt.suptitle(ttl)
+        plt.savefig(ttl)
+        plt.show()
 
-solve()
+def plotSpec(Sys,tm,dt,spec):
+    # Plot a specific species
+    # spec must match a key in ind
+    # Time Vector
+    time = np.arange(0.0, tm, dt)
+    # Initial Conditions
+    C2H4_0 = Sys[ind['C2H4',0]]
+    NO_0   = Sys[ind['NO',  0]]
+    NO2_0  = Sys[ind['NO2', 0]]
+    plt.plot(time, Sys[ind[spec],:])
+    plt.xlabel('Time [mins]')
+    plt.ylabel("Concentration of {0} [ppm]".format(spec))
+    ttl="{0}\nC2H4={1:6.4f},NO={2:6.4f},NO2={3:6.4f}".format(spec,C2H4_0,NO_0,NO2_0)
+    plt.suptitle(ttl)
+    plt.savefig(ttl)
+    plt.show()
+    
+
+def Prob4():
+    # Initial Conditions
+    Sys_0  = np.zeros(16)
+    Sys_0['C2H4'] = 3.0
+    Sys_0['NO']   = 0.375
+    Sys_0['NO2']  = 0.125
+    Sys = solve(Sys_0)
+    plotAll(Sys,720,1e-3)
+
+def PrintState(tn, i, Sys):
+    print("")
+    print("Current State")
+    print("i:          {0:11d}".format(i))
+    print("tn:         {0:11.7f}".format(tn))
+    print("C2H4:       {0:11.7f}".format(Sys[ind['C2H4'],i]))
+    print("O:          {0:11.7f}".format(Sys[ind['O'],i]))
+    print("O3:         {0:11.7f}".format(Sys[ind['O3'],i]))
+    print("NO:         {0:11.7f}".format(Sys[ind['NO'],i]))
+    print("NO2:        {0:11.7f}".format(Sys[ind['NO2'],i]))
+    print("OH:         {0:11.7f}".format(Sys[ind['OH'],i]))
+    print("HO2:        {0:11.7f}".format(Sys[ind['HO2'],i]))
+    print("HNO3:       {0:11.7f}".format(Sys[ind['HNO3'],i]))
+    print("HCHO:       {0:11.7f}".format(Sys[ind['HCHO'],i]))
+    print("CH2OH:      {0:11.7f}".format(Sys[ind['CH2OH'],i]))
+    print("H2COO:      {0:11.7f}".format(Sys[ind['H2COO'],i]))
+    print("CO:         {0:11.7f}".format(Sys[ind['CO'],i]))
+    print("H2:         {0:11.7f}".format(Sys[ind['H2'],i]))
+    print("HCOOH:      {0:11.7f}".format(Sys[ind['HCOOH'],i]))
+    print("HOCH2CHO:   {0:11.7f}".format(Sys[ind['HOCHa'],i]))
+    print("HOCH2CH2O2: {0:11.7f}".format(Sys[ind['HOCHb'],i]))
+    print("O2:         {0:11.0f}".format(O2))
+    print("H2O:        {0:11.0f}".format(H2O))
+    print("CO2:        {0:11.0f}".format(CO2))
+    print("M:          {0:11.0f}".format(M))
+    print("k1:         {0:11.9f}".format(kr1(tn)))
+    print("")
+
+Prob4()
