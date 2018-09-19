@@ -205,26 +205,56 @@ def solve(Sys0):
             Sys[ind[spec],i] = diffs[ind[spec]]
 
         tn += dt
+        i  += 1
+
     return Sys
 
-def plotAll(Sys,tm,dt):
+def plotAll(Sys,tm,dt,fig):
     # Plot the results
     # Time Vector
     time = np.arange(0.0, tm, dt)
     # Initial Conditions
-    C2H4_0 = Sys[ind['C2H4',0]]
-    NO_0   = Sys[ind['NO',  0]]
-    NO2_0  = Sys[ind['NO2', 0]]
+    C2H4_0 = Sys[ind['C2H4'],0]
+    NO_0   = Sys[ind['NO'],  0]
+    NO2_0  = Sys[ind['NO2'], 0]
+    arwprp = dict(width=1.5,facecolor='black',headwidth=2.5)
     for spec in ind.keys():
+        mxi=Sys[ind[spec],:].argmax()
+        print("mxi:{0:4g}".format(mxi))
+        mxv=Sys[ind[spec],mxi]
+        print("mxv:{0:4g}".format(mxv))
+        mxt=mxi*dt
+        print("mxt:{0:4g}".format(mxt))
         plt.plot(time, Sys[ind[spec],:])
+        lbl="Max:{0:4g},{1:4g}".format(mxt,mxv)
+        plt.annotate(lbl,xy=(mxt,mxv),xytext=(0,-30),textcoords='offset points',arrowprops=arwprp)
         plt.xlabel('Time [mins]')
         plt.ylabel("Concentration of {0} [ppm]".format(spec))
         ttl="{0}\nC2H4={1:6.4f},NO={2:6.4f},NO2={3:6.4f}".format(spec,C2H4_0,NO_0,NO2_0)
         plt.suptitle(ttl)
-        plt.savefig(ttl)
+        fil="{0}".format(spec)
+        plt.savefig(fil+fig+"_annotated.pdf")
+        plt.savefig(fil+fig+"_annotated.png")
         plt.show()
 
-def plotSpec(Sys,tm,dt,spec):
+# def plot4(Sys):
+#     # Problem 4 asks for plots of:
+#     # O3, NO, NO2, C2H4, OH, HNO3
+
+#     # Plot Ozone calling out maximum
+#     # Determine Maximum Point
+#     mxx = Sys[ind['O3'],:].argmax()
+#     mxy = Sys[ind['O3'],mxx]
+#     mxt = mxx*1e-3
+#     # Time Vector
+#     t = np.arange(0.0,720.0,1e-3)
+#     # Plot
+#     plt.plot(t,Sys[ind['O3'],:],lw=2)
+#     # Annotation
+#     lbl="Max:{0:5.1f},{1:6.4f}".format(mxi,mxv)
+#     plt.annotate(lbl,xy=(mxt,mxy)
+
+def plotSpec(Sys,tm,dt,spec,fig):
     # Plot a specific species
     # spec must match a key in ind
     # Time Vector
@@ -238,18 +268,97 @@ def plotSpec(Sys,tm,dt,spec):
     plt.ylabel("Concentration of {0} [ppm]".format(spec))
     ttl="{0}\nC2H4={1:6.4f},NO={2:6.4f},NO2={3:6.4f}".format(spec,C2H4_0,NO_0,NO2_0)
     plt.suptitle(ttl)
-    plt.savefig(ttl)
+    plt.savefig(fig+".pdf")
+    plt.savefig(fig+".png")
     plt.show()
     
 
 def Prob4():
     # Initial Conditions
     Sys_0  = np.zeros(16)
-    Sys_0['C2H4'] = 3.0
-    Sys_0['NO']   = 0.375
-    Sys_0['NO2']  = 0.125
+    Sys_0[ind['C2H4']] = 3.0
+    Sys_0[ind['NO']]   = 0.375
+    Sys_0[ind['NO2']]  = 0.125
     Sys = solve(Sys_0)
-    plotAll(Sys,720,1e-3)
+    plotAll(Sys,720,1e-3,"_prob4")
+
+def Prob5():
+    ### Initializing
+    Sys_01  = np.zeros(16)
+    Sys_02  = np.zeros(16)
+    Sys_03  = np.zeros(16)
+    Sys_04  = np.zeros(16)
+    Sys_01[ind['C2H4']] = 1.0
+    Sys_02[ind['C2H4']] = 2.0
+    Sys_03[ind['C2H4']] = 3.0
+    Sys_04[ind['C2H4']] = 4.0
+    Sys_01[ind['NO']]   = 0.375
+    Sys_02[ind['NO']]   = 0.375
+    Sys_03[ind['NO']]   = 0.375
+    Sys_04[ind['NO']]   = 0.375
+    Sys_02[ind['NO2']]  = 0.125
+    Sys_01[ind['NO2']]  = 0.125
+    Sys_03[ind['NO2']]  = 0.125
+    Sys_04[ind['NO2']]  = 0.125
+
+    ### Solving
+    Sys1 = solve(Sys_01)
+    Sys2 = solve(Sys_02)
+    Sys3 = solve(Sys_03)
+    Sys4 = solve(Sys_04)
+    
+    ### Plotting 
+    # Time Vector
+    time = np.arange(0.0, 720, 1e-3)
+    # Maximum Positions
+    mxi1 = Sys1[ind['O3'],:].argmax()
+    mxi2 = Sys2[ind['O3'],:].argmax()
+    mxi3 = Sys3[ind['O3'],:].argmax()
+    mxi4 = Sys4[ind['O3'],:].argmax()
+    mxv1 = Sys1[ind['O3'],mxi1]
+    mxv2 = Sys2[ind['O3'],mxi2]
+    mxv3 = Sys3[ind['O3'],mxi3]
+    mxv4 = Sys4[ind['O3'],mxi4]
+    plt.plot(time,Sys1[ind['O3'],:],color='r',label='1ppm')
+    plt.plot(time,Sys2[ind['O3'],:],color='g',label='2ppm')
+    plt.plot(time,Sys3[ind['O3'],:],color='b',label='3ppm')
+    plt.plot(time,Sys4[ind['O3'],:],color='y',label='4ppm')
+    plt.annotate("Max: {0:5.1f},{1:6.4f}",xy=(mxi1,mxv1))
+    plt.annotate("Max: {0:5.1f},{1:6.4f}",xy=(mxi2,mxv2))
+    plt.annotate("Max: {0:5.1f},{1:6.4f}",xy=(mxi3,mxv3))
+    plt.annotate("Max: {0:5.1f},{1:6.4f}",xy=(mxi4,mxv4))
+    plt.xlabel('Time [mins]')
+    plt.ylabel("Concentration of Ozone [ppm]")
+    plt.suptitle("Ozone - Varying Ethane Initial Concentration")
+    plt.legend()
+    plt.savefig("Prob5.pdf")
+    plt.savefig("Prob5.png")
+    plt.show()
+
+def Prob6():
+    ### Initializing
+    Sys_0 = np.zeros(16)
+    Sys_1 = np.zeros(16)
+    Sys_0[ind['C2H4']] = 3.0
+    Sys_1[ind['C2H4']] = 3.0
+    Sys_0[ind['NO']]   = 0.375
+    Sys_0[ind['NO2']]  = 0.125
+    Sys_1[ind['NO']]   = 0.3
+    Sys_1[ind['NO2']]  = 0.1
+    ### Solving
+    Sys0 = solve(Sys_0)
+    Sys1 = solve(Sys_1)
+    ### Plotting 
+    time = np.arange(0.0, 720, 1e-3)
+    plt.plot(time,Sys0[ind['O3'],:],color='r',label='Original')
+    plt.plot(time,Sys1[ind['O3'],:],color='g',label='Reduced NOx')
+    plt.xlabel('Time [mins]')
+    plt.ylabel("Concentration of Ozone [ppm]")
+    plt.suptitle("Reduced NOx Scenario Comparison")
+    plt.legend()
+    plt.savefig("Prob6.pdf")
+    plt.savefig("Prob6.png")
+    plt.show()
 
 def PrintState(tn, i, Sys):
     print("")
@@ -280,3 +389,5 @@ def PrintState(tn, i, Sys):
     print("")
 
 Prob4()
+#Prob5()
+#Prob6()
