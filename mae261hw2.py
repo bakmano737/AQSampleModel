@@ -35,18 +35,26 @@ def pssaO(t, NO2):
 def pssaOH(HO2, NO, CH2OH, NO2, C2H4):
     nom = kr4*HO2*NO + kr8*CH2OH*O2
     den = kr5*NO2 + kr6*C2H4
+    #return nom/den if den > 0.0 else 0.0
     return nom/den
 
 def pssaHO2(HOCH2CH2O2, NO, C2H4, O3):
     nom = 0.28*kr7*HOCH2CH2O2*NO + 0.12*kr9*C2H4*O3
     den = kr4*NO
+    #return nom/den if den > 0.0 else 0.0
     return nom/den
 
 def pssaHOCH2CH2O2(C2H4, OH, NO):
-    return kr6*C2H4*OH/(kr7*NO)
+    nom = kr6*C2H4*OH
+    den = kr7*NO
+    #return nom/den if den > 0.0 else 0.0
+    return nom/den
 
 def pssaCH2OH(HOCH2CH2O2, NO):
-    return 0.72*kr7*HOCH2CH2O2*NO/(kr8*O2)
+    nom = 0.72*kr7*HOCH2CH2O2*NO
+    den = kr8*O2
+    #return nom/den if den > 0.0 else 0.0
+    return nom/den
 
 # Active Species DiffEq Functions
 def diffC2H4(t, C2H4, OH, O3):
@@ -136,13 +144,17 @@ ind = dict(C2H4  = 0,
 # Single Function for all diff eqs
 # t - current time of simulation
 # Sys - dictionary
-def diffSys(t, Sys):
+def diffSys(t, SysA, SysB):
+    #SysA has concs at start of t
+    #SysA gets modified by rk4 (yn+k1*dt/2)
+    #SysB has SysA + PSSA concs for t
+    #SysB is NOT modified by rk4
     #Evaluate all diff eqs
-    newSys = np.copy(Sys)
+    outSys = np.zeros_like(SysA)
     for spec,func in diffFunc.items():
-        fargs = [Sys[ind[args]] for args in diffArgs[spec]]
-        newSys[ind[spec]] = func(t,Sys[ind[spec]],*fargs)
-    return newSys
+        fargs = [SysB[ind[args]] for args in diffArgs[spec]]
+        outSys[ind[spec]] = func(t,SysA[ind[spec]],*fargs)
+    return outSys
 
 # Solving Procedure
 def solve(Sys0):
@@ -159,9 +171,10 @@ def solve(Sys0):
     
     # Loop through the simulation period
     tn += dt
-    while(tn<tm):
-        i = int(tn/dt)
-        j = int((tn-dt)/dt)
+    i = 1
+    while(i<st):
+        #i = int(tn/dt)
+        j = i-1
 
         # Gather PSSA 3ependents for easier reading
         argO     = [tn, Sys[ind['NO2'],j]]
@@ -175,15 +188,21 @@ def solve(Sys0):
         argCH2OH = [Sys[ind['HOCHb'], j], Sys[ind['NO'], j]]
         
         # Solve PSSA
-        newSys = np.copy(Sys[:,j])
-        newSys[ind['O']]     = pssaO(*argO)
-        newSys[ind['HO2']]   = pssaHO2(*argHO2)
-        newSys[ind['OH']]    = pssaOH(*argOH)
-        newSys[ind['HOCHb']] = pssaHOCH2CH2O2(*argHOCHb)
-        newSys[ind['CH2OH']] = pssaCH2OH(*argCH2OH)
+        pssas = np.copy(Sys[:,j])
+        pssas[ind['O']]     = pssaO(*argO)
+        pssas[ind['HO2']]   = pssaHO2(*argHO2)
+        pssas[ind['OH']]    = pssaOH(*argOH)
+        pssas[ind['HOCHb']] = pssaHOCH2CH2O2(*argHOCHb)
+        pssas[ind['CH2OH']] = pssaCH2OH(*argCH2OH)
 
         # Step Diff Eqs
-        Sys[:,i] = rk.rk4(tn, newSys, dt, diffSys, [])
+        diffs = rk.rk4(tn, Sys[:,j], dt, diffSys, [pssas])
+        
+        # Combine Results
+        for spec in pssaFunc.keys():
+            Sys[ind[spec],i] = pssas[ind[spec]]
+        for spec in diffFunc.keys():
+            Sys[ind[spec],i] = diffs[ind[spec]]
 
         tn += dt
     return Sys
